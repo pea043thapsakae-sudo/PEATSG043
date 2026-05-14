@@ -1,0 +1,90 @@
+{
+  "entities": {
+    "Intern": {
+      "title": "Intern",
+      "description": "Information about an internship student",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "studentId": { "type": "string" },
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "level": { "type": "string" },
+        "major": { "type": "string" },
+        "minor": { "type": "string" },
+        "university": { "type": "string" },
+        "department": { "type": "array", "items": { "type": "string" } },
+        "startDate": { "type": "string", "format": "date" },
+        "endDate": { "type": "string", "format": "date" },
+        "status": { "type": "string", "enum": ["รอฝึกงาน", "กำลังฝึกงาน", "ฝึกงานสำเร็จ"] },
+        "totalScore": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["studentId", "firstName", "lastName", "status"]
+    },
+    "Attendance": {
+      "title": "Attendance",
+      "description": "Daily attendance record for an intern",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "internId": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "status": { "type": "string", "enum": ["present", "late", "sick", "personal", "absent"] },
+        "checkInTime": { "type": "string", "format": "date-time" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["internId", "date", "status"]
+    },
+    "Evaluation": {
+      "title": "Evaluation",
+      "description": "Performance evaluation for an intern",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "internId": { "type": "string" },
+        "evaluatorId": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "scores": { "type": "object" },
+        "totalScore": { "type": "number" },
+        "comments": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["internId", "scores", "totalScore"]
+    },
+    "Activity": {
+      "title": "Activity",
+      "description": "Participation in activities",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "internId": { "type": "string" },
+        "title": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["internId", "title", "date"]
+    }
+  },
+  "firestore": {
+    "/interns/{internId}": {
+      "schema": "Intern",
+      "description": "Collection of all interns"
+    },
+    "/attendance/{attendanceId}": {
+      "schema": "Attendance",
+      "description": "Collection of all attendance records"
+    },
+    "/evaluations/{evaluationId}": {
+      "schema": "Evaluation",
+      "description": "Collection of all evaluations"
+    },
+    "/activities/{activityId}": {
+      "schema": "Activity",
+      "description": "Collection of all activity participation logs"
+    }
+  }
+}
