@@ -130,10 +130,13 @@ export default function Dashboard() {
                 <th>ลาป่วย</th>
                 <th>ลากิจ</th>
                 <th>ขาด</th>
+                <th>จำนวน ชม.</th>
               </tr>
             </thead>
             <tbody>
-              ${internsWithAttendance.map(intern => `
+              ${internsWithAttendance.map(intern => {
+                const totalHours = (intern.attendanceCount.present * 7) + (intern.attendanceCount.late * 3.5);
+                return `
                 <tr>
                   <td class="text-left">${intern.firstName} ${intern.lastName}</td>
                   <td>${intern.studentId}</td>
@@ -142,8 +145,10 @@ export default function Dashboard() {
                   <td>${intern.attendanceCount.sick}</td>
                   <td>${intern.attendanceCount.personal}</td>
                   <td>${intern.attendanceCount.absent}</td>
+                  <td style="font-weight: bold; color: #000;">${totalHours.toLocaleString()}</td>
                 </tr>
-              `).join('')}
+              `;
+              }).join('')}
             </tbody>
           </table>
 
@@ -241,25 +246,32 @@ export default function Dashboard() {
                     <th className="px-2 py-3 text-center text-xs font-bold uppercase text-blue-500">ป่วย</th>
                     <th className="px-2 py-3 text-center text-xs font-bold uppercase text-purple-500">กิจ</th>
                     <th className="px-2 py-3 text-center text-xs font-bold uppercase text-red-500">ขาด</th>
+                    <th className="px-2 py-3 text-center text-xs font-bold uppercase text-gray-900 border-l border-gray-100">รวม (ชม.)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {internsWithAttendance.map((intern) => (
-                    <tr key={intern.id} className="hover:bg-gray-50/50">
-                      <td className="px-4 py-3">
-                        <p className="text-sm font-medium text-gray-900">{intern.firstName} {intern.lastName}</p>
-                        <p className="text-[10px] text-gray-400">{intern.studentId}</p>
-                      </td>
-                      <td className="px-2 py-3 text-center text-sm font-bold text-green-600">{intern.attendanceCount.present}</td>
-                      <td className="px-2 py-3 text-center text-sm font-bold text-amber-500">{intern.attendanceCount.late}</td>
-                      <td className="px-2 py-3 text-center text-sm font-bold text-blue-600">{intern.attendanceCount.sick}</td>
-                      <td className="px-2 py-3 text-center text-sm font-bold text-purple-600">{intern.attendanceCount.personal}</td>
-                      <td className="px-2 py-3 text-center text-sm font-bold text-red-600">{intern.attendanceCount.absent}</td>
-                    </tr>
-                  ))}
+                  {internsWithAttendance.map((intern) => {
+                    const totalHours = (intern.attendanceCount.present * 7) + (intern.attendanceCount.late * 3.5);
+                    return (
+                      <tr key={intern.id} className="hover:bg-gray-50/50">
+                        <td className="px-4 py-3">
+                          <p className="text-sm font-medium text-gray-900">{intern.firstName} {intern.lastName}</p>
+                          <p className="text-[10px] text-gray-400">{intern.studentId}</p>
+                        </td>
+                        <td className="px-2 py-3 text-center text-sm font-bold text-green-600">{intern.attendanceCount.present}</td>
+                        <td className="px-2 py-3 text-center text-sm font-bold text-amber-500">{intern.attendanceCount.late}</td>
+                        <td className="px-2 py-3 text-center text-sm font-bold text-blue-600">{intern.attendanceCount.sick}</td>
+                        <td className="px-2 py-3 text-center text-sm font-bold text-purple-600">{intern.attendanceCount.personal}</td>
+                        <td className="px-2 py-3 text-center text-sm font-bold text-red-600">{intern.attendanceCount.absent}</td>
+                        <td className="px-2 py-3 text-center text-sm font-bold text-gray-900 border-l border-gray-100 bg-gray-50/30">
+                          {totalHours.toLocaleString()}
+                        </td>
+                      </tr>
+                    );
+                  })}
                   {internsWithAttendance.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-400">ยังไม่มีข้อมูล</td>
+                      <td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-400">ยังไม่มีข้อมูล</td>
                     </tr>
                   )}
                 </tbody>
