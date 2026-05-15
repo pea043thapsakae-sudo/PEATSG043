@@ -24,6 +24,7 @@ export default function Dashboard() {
     totalInterns: 0,
     activeInterns: 0,
     completedInterns: 0,
+    pendingInterns: 0,
   });
   const [internsWithAttendance, setInternsWithAttendance] = useState<(Intern & { attendanceCount: any })[]>([]);
   const [overallAttendanceData, setOverallAttendanceData] = useState<any[]>([]);
@@ -44,6 +45,7 @@ export default function Dashboard() {
           totalInterns: allInterns.length,
           activeInterns: allInterns.filter(i => i.status === 'กำลังฝึกงาน' || (i as any).status === 'active').length,
           completedInterns: allInterns.filter(i => i.status === 'ฝึกงานสำเร็จ' || (i as any).status === 'completed').length,
+          pendingInterns: allInterns.filter(i => i.status === 'รอฝึกงาน' || (i as any).status === 'terminated').length,
         });
 
         // Overall Attendance Data for Pie Chart
@@ -87,48 +89,49 @@ export default function Dashboard() {
     fetchData();
   }, []);
 
-  const StatCard = ({ title, value, icon: Icon, color, trend }: any) => (
-    <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm shadow-gray-100/50">
+  const StatCard = ({ title, value, icon: Icon, color, textColor }: any) => (
+    <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm shadow-gray-100/50 transition-all hover:shadow-md hover:border-gray-200">
       <div className="mb-4 flex items-center justify-between">
-        <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${color} bg-opacity-10 text-opacity-100`}>
-          <Icon size={24} className={color.replace('bg-', 'text-')} />
+        <div className={cn("flex h-12 w-12 items-center justify-center rounded-2xl", color, "bg-opacity-10")}>
+          <Icon size={24} className={textColor} />
         </div>
-        {trend && (
-          <div className={clsx(
-            "flex items-center gap-1 text-xs font-medium uppercase tracking-wider",
-            trend > 0 ? "text-green-600" : "text-red-600"
-          )}>
-            {trend > 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-            {Math.abs(trend)}%
-          </div>
-        )}
       </div>
       <h3 className="text-sm font-medium text-gray-500">{title}</h3>
-      <p className="text-3xl font-bold tracking-tight text-gray-900">{value}</p>
+      <p className="text-3xl font-bold tracking-tight text-gray-900 mt-1">{value}</p>
     </div>
   );
 
   return (
     <div className="space-y-8">
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard 
           title="จำนวนนักศึกษาทั้งหมด" 
           value={stats.totalInterns} 
           icon={Users} 
           color="bg-blue-600" 
+          textColor="text-blue-600"
         />
         <StatCard 
-          title="จำนวนนักศึกษาที่กำลังฝึกงานอยู่" 
+          title="รอฝึกงาน" 
+          value={stats.pendingInterns} 
+          icon={Users} 
+          color="bg-amber-600" 
+          textColor="text-amber-600"
+        />
+        <StatCard 
+          title="กำลังฝึกงาน" 
           value={stats.activeInterns} 
           icon={UserPlus} 
           color="bg-green-600" 
+          textColor="text-green-600"
         />
         <StatCard 
-          title="จำนวนนักศึกษาที่ฝึกงานจบแล้ว" 
+          title="ฝึกงานสำเร็จแล้ว" 
           value={stats.completedInterns} 
           icon={GraduationCap} 
           color="bg-orange-600" 
+          textColor="text-orange-600"
         />
       </div>
 
