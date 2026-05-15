@@ -233,10 +233,12 @@ export default function Interns() {
                 <td className="px-6 py-4">
                   <span className={cn(
                     "inline-flex rounded-full px-3 py-1 text-[11px] font-bold uppercase",
-                    intern.status === 'กำลังฝึกงาน' ? "bg-green-100 text-green-700" : 
-                    intern.status === 'ฝึกงานสำเร็จ' ? "bg-blue-100 text-blue-700" : "bg-orange-100 text-orange-700"
+                    (intern.status === 'กำลังฝึกงาน' || (intern as any).status === 'active' || !intern.status) ? "bg-green-100 text-green-700" : 
+                    (intern.status === 'ฝึกงานสำเร็จ' || (intern as any).status === 'completed') ? "bg-blue-100 text-blue-700" : "bg-orange-100 text-orange-700"
                   )}>
-                    {intern.status}
+                    {intern.status === 'active' ? 'กำลังฝึกงาน' : 
+                     intern.status === 'completed' ? 'ฝึกงานสำเร็จ' : 
+                     intern.status === 'terminated' ? 'ยกเลิก' : intern.status || 'รอฝึกงาน'}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-right">
@@ -435,7 +437,7 @@ export default function Interns() {
                           onClick={() => setFormData({...formData, status: s as InternStatus})}
                           className={cn(
                             "flex-1 rounded-xl border py-3 text-sm font-bold transition-all",
-                            formData.status === s 
+                            (formData.status === s || (s === 'กำลังฝึกงาน' && (formData.status as any) === 'active') || (s === 'ฝึกงานสำเร็จ' && (formData.status as any) === 'completed')) 
                               ? "border-orange-500 bg-orange-50 text-orange-600 ring-2 ring-orange-100" 
                               : "border-gray-100 bg-gray-50 text-gray-400 hover:border-gray-200"
                           )}

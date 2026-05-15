@@ -91,20 +91,11 @@ export default function Attendance() {
           // 2. ระบบเริ่มเปิดบันทึกข้อมูลตั้งแต่วันที่ 20 เมษายน 2569 เป็นต้นไป
           if (dateStr < '2026-04-20') return false;
 
-          // 3. กฎความสัมพันธ์ของระบบใหม่: แสดงเฉพาะ "กำลังฝึกงาน" เท่านั้น
-          // และตรวจสอบช่วงวันที่ฝึกงานจริงของนักศึกษาแต่ละคนร่วมด้วย
-          const startDate = i.startDate || '';
-          const endDate = i.endDate || '';
+          // 3. กฎความสัมพันธ์ของระบบใหม่: แสดงเฉพาะ "กำลังฝึกงาน" หรือสถานะเดิม "active"
           const status = i.status as string;
-          
-          // แสดงเฉพาะคนที่สถานะเป็น "กำลังฝึกงาน"
-          const isActive = status === 'กำลังฝึกงาน';
+          const isActive = status === 'กำลังฝึกงาน' || status === 'active' || !status;
 
-          // ตรวจสอบความถูกต้องของวันที่ (ถ้ามีระบุ)
-          const isStarted = !startDate || dateStr >= startDate;
-          const isNotEnded = !endDate || dateStr <= endDate;
-
-          return isActive && isStarted && isNotEnded;
+          return isActive;
         });
         setInterns(matchingInterns);
       } catch (error) {

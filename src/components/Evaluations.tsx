@@ -257,7 +257,7 @@ export default function Evaluations() {
           <p className="text-sm text-gray-500">เลือกนักศึกษาที่ฝึกงานสำเร็จแล้วเพื่อออกใบรับรอง</p>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {interns.filter(i => i.status === 'ฝึกงานสำเร็จ').map((intern) => (
+          {interns.filter(i => i.status === 'ฝึกงานสำเร็จ' || (i as any).status === 'completed').map((intern) => (
             <button
               key={intern.id}
               onClick={() => setSelectedInternForCert(intern)}
@@ -275,7 +275,7 @@ export default function Evaluations() {
               <ChevronRight size={20} className="text-gray-300 shrink-0" />
             </button>
           ))}
-          {interns.filter(i => i.status === 'ฝึกงานสำเร็จ').length === 0 && (
+          {interns.filter(i => i.status === 'ฝึกงานสำเร็จ' || (i as any).status === 'completed').length === 0 && (
             <div className="col-span-full border border-dashed border-gray-200 rounded-2xl p-8 text-center text-gray-400 text-sm">
               ยังไม่มีนักศึกษาที่สำเร็จการฝึกงาน
             </div>
@@ -374,7 +374,7 @@ export default function Evaluations() {
                 <div className="mb-8 space-y-4">
                   <label className="text-sm font-bold text-gray-700">เลือกนักศึกษา</label>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    {interns.filter(i => i.status === 'กำลังฝึกงาน').map((intern) => (
+                    {interns.filter(i => i.status === 'กำลังฝึกงาน' || (i as any).status === 'active' || !i.status).map((intern) => (
                       <button
                         key={intern.id}
                         type="button"

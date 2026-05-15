@@ -3,6 +3,8 @@ import {
   onAuthStateChanged, 
   signInWithPopup, 
   GoogleAuthProvider, 
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signOut, 
   User 
 } from 'firebase/auth';
@@ -12,6 +14,8 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: () => Promise<void>;
+  loginWithEmail: (email: string, pass: string) => Promise<void>;
+  registerWithEmail: (email: string, pass: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -43,12 +47,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const loginWithEmail = async (idOrEmail: string, pass: string) => {
+    try {
+      // If it's a numeric ID, append a internal domain to make it an email for Firebase
+      const email = idOrEmail.includes('@') ? idOrEmail : `${idOrEmail}@intern.hub`;
+      await signInWithEmailAndPassword(auth, email, pass);
+    } catch (error: any) {
+      console.error("Login Error:", error);
+      let message = 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ';
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        message = 'รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง';
+      } else if (error.code === 'auth/invalid-email') {
+        message = 'รูปแบบรหัสพนักงานไม่ถูกต้อง';
+      }
+      throw new Error(message);
+    }
+  };
+
+  const registerWithEmail = async (idOrEmail: string, pass: string) => {
+    try {
+      const email = idOrEmail.includes('@') ? idOrEmail : `${idOrEmail}@intern.hub`;
+      await createUserWithEmailAndPassword(auth, email, pass);
+    } catch (error: any) {
+      console.error("Register Error:", error);
+      let message = 'ไม่สามารถสร้างบัญชีได้';
+      if (error.code === 'auth/email-already-in-use') {
+        message = 'รหัสพนักงานนี้ถูกใช้งานแล้ว';
+      }
+      throw new Error(message);
+    }
+  };
+
   const logout = async () => {
     await signOut(auth);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithEmail, registerWithEmail, logout }}>
       {children}
     </AuthContext.Provider>
   );

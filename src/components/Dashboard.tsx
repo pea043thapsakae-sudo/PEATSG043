@@ -42,8 +42,8 @@ export default function Dashboard() {
 
         setStats({
           totalInterns: allInterns.length,
-          activeInterns: allInterns.filter(i => i.status === 'กำลังฝึกงาน').length,
-          completedInterns: allInterns.filter(i => i.status === 'ฝึกงานสำเร็จ').length,
+          activeInterns: allInterns.filter(i => i.status === 'กำลังฝึกงาน' || (i as any).status === 'active').length,
+          completedInterns: allInterns.filter(i => i.status === 'ฝึกงานสำเร็จ' || (i as any).status === 'completed').length,
         });
 
         // Overall Attendance Data for Pie Chart
