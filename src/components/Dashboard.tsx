@@ -13,11 +13,15 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Intern, Attendance } from '../types';
 import { 
-  PieChart, 
-  Pie, 
-  Cell, 
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
   ResponsiveContainer,
   Tooltip,
+  Legend,
+  Cell
 } from 'recharts';
 import { cn } from '../lib/utils';
 
@@ -31,6 +35,15 @@ export default function Dashboard() {
   const [internsWithAttendance, setInternsWithAttendance] = useState<(Intern & { attendanceCount: any })[]>([]);
   const [overallAttendanceData, setOverallAttendanceData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedInternForReport, setSelectedInternForReport] = useState<string>('all');
+
+  const internChartData = internsWithAttendance.map(intern => ({
+    name: intern.firstName,
+    'ปกติ': intern.attendanceCount.present,
+    'สาย': intern.attendanceCount.late,
+    'ป่วย': intern.attendanceCount.sick,
+    'กิจ': intern.attendanceCount.personal,
+  }));
 
   useEffect(() => {
     async function fetchData() {
@@ -95,78 +108,212 @@ export default function Dashboard() {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
+    const filteredInterns = selectedInternForReport === 'all' 
+      ? internsWithAttendance 
+      : internsWithAttendance.filter(i => i.id === selectedInternForReport);
+
+    // Calculate max value for scale
+    const allValues = filteredInterns.flatMap(i => [
+      i.attendanceCount.present,
+      i.attendanceCount.late,
+      i.attendanceCount.sick,
+      i.attendanceCount.personal,
+      i.attendanceCount.absent
+    ]);
+    const maxVal = Math.max(...allValues, 10);
+    const yAxisTicks = [0, 5, 10, 15, 20, 25].filter(t => t <= Math.ceil(maxVal / 5) * 5 + 5);
+
     const reportContent = `
       <html>
         <head>
           <title>รายงานสรุปการมาฝึกงาน</title>
           <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
           <style>
-            body { font-family: 'Sarabun', sans-serif; padding: 10mm; color: #333; font-size: 14px; }
-            h1 { text-align: center; color: #000; margin-bottom: 15px; font-size: 20px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-            th, td { border: 1px solid #ddd; padding: 6px 4px; text-align: center; font-size: 13px; }
-            th { background-color: #f8f9fa; font-weight: bold; }
+            @page {
+              size: A4;
+              margin: 15mm;
+            }
+            body { 
+              font-family: 'Sarabun', sans-serif; 
+              color: #333; 
+              font-size: 13px;
+              margin: 0;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            .page-header { text-align: right; font-size: 10px; color: #666; margin-bottom: 5px; }
+            h1 { text-align: center; color: #000; margin-bottom: 3px; font-size: 18px; }
+            h2 { text-align: center; color: #666; margin-bottom: 12px; font-size: 14px; font-weight: normal; }
+            
+            /* Main Layout Table for repeated footer */
+            .main-layout { width: 100%; border-collapse: collapse; }
+            .content-cell { padding: 0; }
+            
+            /* Inner Data Table */
+            .data-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+            .data-table th, .data-table td { border: 1px solid #ddd; padding: 5px 3px; text-align: center; font-size: 11px; }
+            .data-table th { background-color: #f8f9fa; font-weight: bold; }
             .text-left { text-align: left; }
-            .header-info { margin-bottom: 15px; text-align: right; font-size: 12px; }
-            .summary-footer { margin-top: 20px; }
+            
+            /* Legend & Chart */
+            .legend { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 5px; font-size: 9px; }
+            .legend-item { display: flex; align-items: center; gap: 3px; }
+            .legend-color { width: 7px; height: 7px; border-radius: 50%; }
+            .chart-container { 
+              margin: 10px 0; 
+              padding: 12px; 
+              border: 1px solid #f0f0f0; 
+              border-radius: 8px;
+              page-break-inside: avoid;
+            }
+            .chart-title { font-weight: bold; margin-bottom: 12px; font-size: 12px; text-align: left; }
+
+            /* Signature Footer */
+            .signature-wrapper { 
+              width: 100%; 
+              padding-top: 20px;
+            }
+            .signature-table { width: 100%; border: none; }
+            .signature-cell { width: 50%; text-align: center; vertical-align: bottom; }
+            .signature-cell p { margin: 2px 0; }
+            .signature-line { margin-bottom: 35px !important; }
+
             @media print {
               .no-print { display: none; }
-              body { padding: 5mm; }
+              tfoot { display: table-footer-group; }
             }
           </style>
         </head>
         <body>
-          <div class="header-info">
-            พิมพ์เมื่อวันที่: ${new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}
-          </div>
-          <h1>รายงานสรุปการเข้าฝึกงาน</h1>
-          <table>
+          <table class="main-layout">
             <thead>
               <tr>
-                <th class="text-left">ชื่อ-นามสกุล</th>
-                <th>รหัสประจำตัว</th>
-                <th>มาปกติ</th>
-                <th>มาสาย</th>
-                <th>ลาป่วย</th>
-                <th>ลากิจ</th>
-                <th>ขาด</th>
-                <th>จำนวน ชม.</th>
+                <td class="content-cell">
+                  <div class="page-header">
+                    พิมพ์เมื่อวันที่: ${new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </div>
+                  <h1>รายงานสรุปการเข้าฝึกงาน</h1>
+                  <h2>การไฟฟ้าส่วนภูมิภาคสาขาทับสะแก</h2>
+                </td>
               </tr>
             </thead>
+            
             <tbody>
-              ${internsWithAttendance.map(intern => {
-                const totalHours = (intern.attendanceCount.present * 7) + (intern.attendanceCount.late * 3.5);
-                return `
-                <tr>
-                  <td class="text-left">${intern.firstName} ${intern.lastName}</td>
-                  <td>${intern.studentId}</td>
-                  <td>${intern.attendanceCount.present}</td>
-                  <td>${intern.attendanceCount.late}</td>
-                  <td>${intern.attendanceCount.sick}</td>
-                  <td>${intern.attendanceCount.personal}</td>
-                  <td>${intern.attendanceCount.absent}</td>
-                  <td style="font-weight: bold; color: #000;">${totalHours.toLocaleString()}</td>
-                </tr>
-              `;
-              }).join('')}
+              <tr>
+                <td class="content-cell">
+                  <!-- Attendance Table -->
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th class="text-left">ชื่อ-นามสกุล</th>
+                        <th>รหัสประจำตัว</th>
+                        <th>มาปกติ</th>
+                        <th>มาสาย</th>
+                        <th>ลาป่วย</th>
+                        <th>ลากิจ</th>
+                        <th>ขาด</th>
+                        <th>จำนวน ชม.</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${filteredInterns.map(intern => {
+                        const totalHours = (intern.attendanceCount.present * 7) + (intern.attendanceCount.late * 3.5);
+                        return `
+                        <tr>
+                          <td class="text-left">${intern.firstName} ${intern.lastName}</td>
+                          <td>${intern.studentId}</td>
+                          <td>${intern.attendanceCount.present}</td>
+                          <td>${intern.attendanceCount.late}</td>
+                          <td>${intern.attendanceCount.sick}</td>
+                          <td>${intern.attendanceCount.personal}</td>
+                          <td>${intern.attendanceCount.absent}</td>
+                          <td style="font-weight: bold;">${totalHours.toLocaleString()}</td>
+                        </tr>
+                        `;
+                      }).join('')}
+                    </tbody>
+                  </table>
+
+                  <div class="chart-container">
+                    <div class="chart-title">อัตราการเข้าปฏิบัติงานรายบุคคล (วัน)</div>
+                    
+                    <div class="legend">
+                      <div class="legend-item"><div class="legend-color" style="background: #8b5cf6;"></div> กิจ</div>
+                      <div class="legend-item"><div class="legend-color" style="background: #10b981;"></div> ปกติ</div>
+                      <div class="legend-item"><div class="legend-color" style="background: #3b82f6;"></div> ป่วย</div>
+                      <div class="legend-item"><div class="legend-color" style="background: #f59e0b;"></div> สาย</div>
+                    </div>
+
+                    <svg viewBox="0 0 800 300" width="100%" height="280" xmlns="http://www.w3.org/2000/svg">
+                      ${yAxisTicks.map(t => {
+                        const y = 250 - (t / Math.max(...yAxisTicks)) * 200;
+                        return `
+                          <text x="35" y="${y + 4}" text-anchor="end" font-size="10" fill="#666">${t}</text>
+                          <line x1="45" y1="${y}" x2="780" y2="${y}" stroke="#eee" stroke-dasharray="3,3" />
+                        `;
+                      }).join('')}
+                      
+                      <text x="15" y="150" transform="rotate(-90 15 150)" text-anchor="middle" font-size="10" fill="#666">จำนวนวัน</text>
+                      <line x1="45" y1="50" x2="45" y2="250" stroke="#ccc" />
+
+                      ${filteredInterns.map((intern, i) => {
+                        const groupWidth = 735 / filteredInterns.length;
+                        const groupX = 45 + (i * groupWidth);
+                        const barWidth = Math.min(groupWidth / 6, 20);
+                        const chartHeight = 250;
+                        const maxTick = Math.max(...yAxisTicks);
+                        
+                        const getY = (val: number) => 250 - (val / maxTick) * chartHeight;
+                        const getHeight = (val: number) => (val / maxTick) * chartHeight;
+
+                        return `
+                          <g>
+                            <rect x="${groupX + (groupWidth/2) - (barWidth * 2)}" y="${getY(intern.attendanceCount.personal)}" width="${barWidth}" height="${getHeight(intern.attendanceCount.personal)}" fill="#8b5cf6" rx="1" />
+                            <rect x="${groupX + (groupWidth/2) - barWidth}" y="${getY(intern.attendanceCount.present)}" width="${barWidth}" height="${getHeight(intern.attendanceCount.present)}" fill="#10b981" rx="1" />
+                            <rect x="${groupX + (groupWidth/2)}" y="${getY(intern.attendanceCount.sick)}" width="${barWidth}" height="${getHeight(intern.attendanceCount.sick)}" fill="#3b82f6" rx="1" />
+                            <rect x="${groupX + (groupWidth/2) + barWidth}" y="${getY(intern.attendanceCount.late)}" width="${barWidth}" height="${getHeight(intern.attendanceCount.late)}" fill="#f59e0b" rx="1" />
+                            <text x="${groupX + groupWidth/2}" y="${filteredInterns.length > 5 ? 270 : 275}" text-anchor="middle" font-size="${filteredInterns.length > 8 ? 8 : 10}" fill="#333">${intern.firstName}</text>
+                          </g>
+                        `;
+                      }).join('')}
+                      
+                      <line x1="45" y1="250" x2="780" y2="250" stroke="#ccc" />
+                    </svg>
+                  </div>
+                </td>
+              </tr>
             </tbody>
+
+            <tfoot>
+              <tr>
+                <td class="content-cell">
+                  <div class="signature-wrapper">
+                    <table class="signature-table">
+                      <tr>
+                        <td class="signature-cell">
+                          <p class="signature-line">ลงชื่อ...........................................................................</p>
+                          <p>( นางสาวดวงพร เหลืองเถลิงพงษ์ )</p>
+                          <p style="font-size: 10px; color: #666;">ตำแหน่ง ผู้ช่วยบันทึกข้อมูลคอมพิวเตอร์</p>
+                        </td>
+                        <td class="signature-cell">
+                          <p class="signature-line">ลงชื่อ...........................................................................</p>
+                          <p>( นายภูศเดช  ภักดีพันธ์ )</p>
+                          <p style="font-size: 10px; color: #666;">ตำแหน่ง ผู้จัดการ การไฟฟ้าส่วนภูมิภาคสาขาทับสะแก</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </div>
+                </td>
+              </tr>
+            </tfoot>
           </table>
 
-          <div style="display: flex; justify-content: space-between; margin-top: 40px; padding: 0 40px;">
-            <div style="text-align: center;">
-              <p style="margin-bottom: 40px;">ลงชื่อ...........................................................................</p>
-              <p>( นางสาวดวงพร เหลืองเถลิงพงษ์ )</p>
-              <p style="font-size: 13px; margin-top: 5px;">ตำแหน่ง ผู้ช่วยบันทึกข้อมูลคอมพิวเตอร์</p>
-            </div>
-            <div style="text-align: center;">
-              <p style="margin-bottom: 40px;">ลงชื่อ...........................................................................</p>
-              <p>( นายภูศเดช  ภักดีพันธ์ )</p>
-              <p style="font-size: 13px; margin-top: 5px;">ตำแหน่ง ผู้จัดการ การไฟฟ้าส่วนภูมิภาคสาขาทับสะแก</p>
-            </div>
-          </div>
-
           <script>
-            window.onload = () => { window.print(); };
+            window.onload = () => { 
+              setTimeout(() => { 
+                window.print(); 
+              }, 800); 
+            };
           </script>
         </body>
       </html>
@@ -223,18 +370,32 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        {/* Main Section: Attendance Summary Table */}
-        <div className="lg:col-span-2 space-y-6">
+        {/* Main Section: Attendance Summary Table and Chart */}
+        <div className="lg:col-span-3 space-y-8">
           <div className="rounded-3xl border border-gray-100 bg-white p-8 overflow-hidden">
-            <div className="mb-6 flex items-center justify-between">
+            <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <h3 className="text-lg font-bold text-gray-900">สรุปการเข้าฝึกงานรายบุคคล</h3>
-              <button 
-                onClick={printAttendanceReport}
-                className="flex items-center gap-2 rounded-xl bg-gray-900 px-4 py-2 text-sm font-bold text-white transition-all hover:bg-gray-800 active:scale-95"
-              >
-                <Printer size={16} />
-                <span>พิมพ์รายงานสรุป</span>
-              </button>
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <select
+                  value={selectedInternForReport}
+                  onChange={(e) => setSelectedInternForReport(e.target.value)}
+                  className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-blue-500/20"
+                >
+                  <option value="all">นักศึกษาทั้งหมด</option>
+                  {internsWithAttendance.map((intern) => (
+                    <option key={intern.id} value={intern.id}>
+                      {intern.firstName} {intern.lastName}
+                    </option>
+                  ))}
+                </select>
+                <button 
+                  onClick={printAttendanceReport}
+                  className="flex items-center gap-2 rounded-xl bg-gray-900 px-4 py-2 text-sm font-bold text-white transition-all hover:bg-gray-800 active:scale-95 whitespace-nowrap"
+                >
+                  <Printer size={16} />
+                  <span>พิมพ์รายงานสรุป</span>
+                </button>
+              </div>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left">
@@ -278,44 +439,49 @@ export default function Dashboard() {
               </table>
             </div>
           </div>
-        </div>
 
-        {/* Overall Attendance Chart Section */}
-        <div className="space-y-8">
+          {/* Overall Attendance Chart Section */}
           <div className="rounded-3xl border border-gray-100 bg-white p-8">
-            <h3 className="mb-8 text-lg font-bold text-gray-900">อัตราการเข้าปฏิบัติงานรวม</h3>
-            <div className="h-[280px]">
+            <h3 className="mb-8 text-lg font-bold text-gray-900">อัตราการเข้าปฏิบัติงานรายบุคคล (วัน)</h3>
+            <div className="h-[400px]">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={overallAttendanceData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {overallAttendanceData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
+                <BarChart
+                  data={internChartData}
+                  margin={{ top: 20, right: 30, left: 0, bottom: 20 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                  />
+                  <YAxis 
+                    axisLine={true} 
+                    tickLine={false} 
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    label={{ value: 'จำนวนวัน', angle: -90, position: 'insideLeft', offset: 10, style: { fontSize: 12, fill: '#6b7280' } }}
+                  />
                   <Tooltip 
+                    cursor={{ fill: 'transparent' }}
                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                   />
-                </PieChart>
+                  <Legend 
+                    verticalAlign="top" 
+                    align="right" 
+                    iconType="circle"
+                    wrapperStyle={{ fontSize: '12px', paddingBottom: '20px' }}
+                  />
+                  <Bar dataKey="ปกติ" fill="#10b981" radius={[4, 4, 0, 0]} barSize={30} />
+                  <Bar dataKey="สาย" fill="#f59e0b" radius={[4, 4, 0, 0]} barSize={30} />
+                  <Bar dataKey="ป่วย" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={30} />
+                  <Bar dataKey="กิจ" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={30} />
+                </BarChart>
               </ResponsiveContainer>
-            </div>
-            <div className="mt-6 grid grid-cols-2 gap-4">
-              {overallAttendanceData.map((item, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
-                  <span className="text-xs font-medium text-gray-600">{item.name} ({item.value})</span>
-                </div>
-              ))}
             </div>
           </div>
         </div>
+
       </div>
     </div>
   );
