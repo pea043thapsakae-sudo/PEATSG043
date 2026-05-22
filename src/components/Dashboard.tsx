@@ -21,7 +21,8 @@ import {
   ResponsiveContainer,
   Tooltip,
   Legend,
-  Cell
+  Cell,
+  LabelList
 } from 'recharts';
 import { cn } from '../lib/utils';
 
@@ -268,10 +269,22 @@ export default function Dashboard() {
 
                         return `
                           <g>
+                            <!-- กิจ - Violet -->
                             <rect x="${groupX + (groupWidth/2) - (barWidth * 2)}" y="${getY(intern.attendanceCount.personal)}" width="${barWidth}" height="${getHeight(intern.attendanceCount.personal)}" fill="#8b5cf6" rx="1" />
+                            ${intern.attendanceCount.personal > 0 ? `<text x="${groupX + (groupWidth/2) - (barWidth * 1.5)}" y="${getY(intern.attendanceCount.personal) - 4}" text-anchor="middle" font-size="8" font-weight="bold" fill="#8b5cf6">${intern.attendanceCount.personal}</text>` : ''}
+
+                            <!-- ปกติ - Green -->
                             <rect x="${groupX + (groupWidth/2) - barWidth}" y="${getY(intern.attendanceCount.present)}" width="${barWidth}" height="${getHeight(intern.attendanceCount.present)}" fill="#10b981" rx="1" />
+                            ${intern.attendanceCount.present > 0 ? `<text x="${groupX + (groupWidth/2) - (barWidth * 0.5)}" y="${getY(intern.attendanceCount.present) - 4}" text-anchor="middle" font-size="8" font-weight="bold" fill="#10b981">${intern.attendanceCount.present}</text>` : ''}
+
+                            <!-- ป่วย - Blue -->
                             <rect x="${groupX + (groupWidth/2)}" y="${getY(intern.attendanceCount.sick)}" width="${barWidth}" height="${getHeight(intern.attendanceCount.sick)}" fill="#3b82f6" rx="1" />
+                            ${intern.attendanceCount.sick > 0 ? `<text x="${groupX + (groupWidth/2) + (barWidth * 0.5)}" y="${getY(intern.attendanceCount.sick) - 4}" text-anchor="middle" font-size="8" font-weight="bold" fill="#3b82f6">${intern.attendanceCount.sick}</text>` : ''}
+
+                            <!-- สาย - Orange -->
                             <rect x="${groupX + (groupWidth/2) + barWidth}" y="${getY(intern.attendanceCount.late)}" width="${barWidth}" height="${getHeight(intern.attendanceCount.late)}" fill="#f59e0b" rx="1" />
+                            ${intern.attendanceCount.late > 0 ? `<text x="${groupX + (groupWidth/2) + (barWidth * 1.5)}" y="${getY(intern.attendanceCount.late) - 4}" text-anchor="middle" font-size="8" font-weight="bold" fill="#f59e0b">${intern.attendanceCount.late}</text>` : ''}
+
                             <text x="${groupX + groupWidth/2}" y="${filteredInterns.length > 5 ? 270 : 275}" text-anchor="middle" font-size="${filteredInterns.length > 8 ? 8 : 10}" fill="#333">${intern.firstName}</text>
                           </g>
                         `;
@@ -447,7 +460,7 @@ export default function Dashboard() {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={internChartData}
-                  margin={{ top: 20, right: 30, left: 0, bottom: 20 }}
+                  margin={{ top: 35, right: 30, left: 0, bottom: 20 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                   <XAxis 
@@ -472,10 +485,18 @@ export default function Dashboard() {
                     iconType="circle"
                     wrapperStyle={{ fontSize: '12px', paddingBottom: '20px' }}
                   />
-                  <Bar dataKey="ปกติ" fill="#10b981" radius={[4, 4, 0, 0]} barSize={30} />
-                  <Bar dataKey="สาย" fill="#f59e0b" radius={[4, 4, 0, 0]} barSize={30} />
-                  <Bar dataKey="ป่วย" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={30} />
-                  <Bar dataKey="กิจ" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={30} />
+                  <Bar dataKey="ปกติ" fill="#10b981" radius={[4, 4, 0, 0]} barSize={30}>
+                    <LabelList dataKey="ปกติ" position="top" style={{ fill: '#10b981', fontSize: 11, fontWeight: 'bold' }} formatter={(val: any) => typeof val === 'number' && val > 0 ? val : ''} />
+                  </Bar>
+                  <Bar dataKey="สาย" fill="#f59e0b" radius={[4, 4, 0, 0]} barSize={30}>
+                    <LabelList dataKey="สาย" position="top" style={{ fill: '#f59e0b', fontSize: 11, fontWeight: 'bold' }} formatter={(val: any) => typeof val === 'number' && val > 0 ? val : ''} />
+                  </Bar>
+                  <Bar dataKey="ป่วย" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={30}>
+                    <LabelList dataKey="ป่วย" position="top" style={{ fill: '#3b82f6', fontSize: 11, fontWeight: 'bold' }} formatter={(val: any) => typeof val === 'number' && val > 0 ? val : ''} />
+                  </Bar>
+                  <Bar dataKey="กิจ" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={30}>
+                    <LabelList dataKey="กิจ" position="top" style={{ fill: '#8b5cf6', fontSize: 11, fontWeight: 'bold' }} formatter={(val: any) => typeof val === 'number' && val > 0 ? val : ''} />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
