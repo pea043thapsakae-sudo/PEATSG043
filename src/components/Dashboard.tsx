@@ -7,7 +7,8 @@ import {
   ArrowDownRight,
   GraduationCap,
   Printer,
-  FileText
+  FileText,
+  Settings
 } from 'lucide-react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -37,6 +38,13 @@ export default function Dashboard() {
   const [overallAttendanceData, setOverallAttendanceData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedInternForReport, setSelectedInternForReport] = useState<string>('all');
+  
+  // Custom Signatory States for Report Printing
+  const [preparerName, setPreparerName] = useState<string>("นางสาวดวงพร เหลืองเถลิงพงษ์");
+  const [preparerPosition, setPreparerPosition] = useState<string>("ผู้ช่วยบันทึกข้อมูลคอมพิวเตอร์");
+  const [managerName, setManagerName] = useState<string>("นายภูศเดช  ภักดีพันธ์");
+  const [managerPosition, setManagerPosition] = useState<string>("ผู้จัดการ การไฟฟ้าส่วนภูมิภาคสาขาทับสะแก");
+  const [showSignSettings, setShowSignSettings] = useState<boolean>(false);
 
   const internChartData = internsWithAttendance.map(intern => ({
     name: intern.firstName,
@@ -305,13 +313,13 @@ export default function Dashboard() {
                       <tr>
                         <td class="signature-cell">
                           <p class="signature-line">ลงชื่อ...........................................................................</p>
-                          <p>( นางสาวดวงพร เหลืองเถลิงพงษ์ )</p>
-                          <p style="font-size: 10px; color: #666;">ตำแหน่ง ผู้ช่วยบันทึกข้อมูลคอมพิวเตอร์</p>
+                          <p>( ${preparerName} )</p>
+                          <p style="font-size: 10px; color: #666;">ตำแหน่ง ${preparerPosition}</p>
                         </td>
                         <td class="signature-cell">
                           <p class="signature-line">ลงชื่อ...........................................................................</p>
-                          <p>( นายภูศเดช  ภักดีพันธ์ )</p>
-                          <p style="font-size: 10px; color: #666;">ตำแหน่ง ผู้จัดการ การไฟฟ้าส่วนภูมิภาคสาขาทับสะแก</p>
+                          <p>( ${managerName} )</p>
+                          <p style="font-size: 10px; color: #666;">ตำแหน่ง ${managerPosition}</p>
                         </td>
                       </tr>
                     </table>
@@ -401,6 +409,19 @@ export default function Dashboard() {
                     </option>
                   ))}
                 </select>
+                <button
+                  onClick={() => setShowSignSettings(!showSignSettings)}
+                  title="ตั้งค่าผู้ลงลายมือชื่อ"
+                  className={cn(
+                    "flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold transition-all active:scale-95 whitespace-nowrap",
+                    showSignSettings 
+                      ? "bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100" 
+                      : "bg-white border-gray-250 text-gray-700 hover:bg-gray-50 hover:border-gray-300"
+                  )}
+                >
+                  <Settings size={16} />
+                  <span>ตั้งค่าผู้ลงนาม</span>
+                </button>
                 <button 
                   onClick={printAttendanceReport}
                   className="flex items-center gap-2 rounded-xl bg-gray-900 px-4 py-2 text-sm font-bold text-white transition-all hover:bg-gray-800 active:scale-95 whitespace-nowrap"
@@ -410,6 +431,59 @@ export default function Dashboard() {
                 </button>
               </div>
             </div>
+
+            {/* Custom Signatories Setup Panel */}
+            {showSignSettings && (
+              <div className="mb-6 rounded-2xl bg-gray-50/70 p-5 border border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-6 animate-fadeIn">
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">ฝั่งผู้จัดทำ</h4>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">ชื่อ-ามสกุล ผู้จัดทำ</label>
+                    <input 
+                      type="text" 
+                      value={preparerName} 
+                      onChange={(e) => setPreparerName(e.target.value)}
+                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-750 focus:ring-2 focus:ring-blue-500/20 outline-none"
+                      placeholder="เช่น นางสาวดวงพร เหลืองเถลิงพงษ์"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">ตำแหน่ง ผู้จัดทำ</label>
+                    <input 
+                      type="text" 
+                      value={preparerPosition} 
+                      onChange={(e) => setPreparerPosition(e.target.value)}
+                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-750 focus:ring-2 focus:ring-blue-500/20 outline-none"
+                      placeholder="เช่น ผู้ช่วยบันทึกข้อมูลคอมพิวเตอร์"
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">ฝั่งอนุมัติ / ผู้จัดการ (แก้ไขได้กรณีไปราชการ)</h4>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">ชื่อ-ามสกุล ผู้จัดการ/ผู้ลงนาม</label>
+                    <input 
+                      type="text" 
+                      value={managerName} 
+                      onChange={(e) => setManagerName(e.target.value)}
+                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-750 focus:ring-2 focus:ring-blue-500/20 outline-none"
+                      placeholder="เช่น นายภูศเดช  ภักดีพันธ์"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">ตำแหน่ง/รักษาการแทน</label>
+                    <input 
+                      type="text" 
+                      value={managerPosition} 
+                      onChange={(e) => setManagerPosition(e.target.value)}
+                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-750 focus:ring-2 focus:ring-blue-500/20 outline-none"
+                      placeholder="เช่น ผู้จัดการ หรือ รักษาการแทน..."
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
