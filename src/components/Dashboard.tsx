@@ -184,7 +184,7 @@ export default function Dashboard() {
               padding-top: 20px;
             }
             .signature-table { width: 100%; border: none; }
-            .signature-cell { width: 50%; text-align: center; vertical-align: bottom; }
+            .signature-cell { width: 50%; text-align: center; vertical-align: top; }
             .signature-cell p { margin: 2px 0; }
             .signature-line { margin-bottom: 35px !important; }
 
