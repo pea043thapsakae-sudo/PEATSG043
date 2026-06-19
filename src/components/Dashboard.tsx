@@ -44,6 +44,7 @@ export default function Dashboard() {
   const [preparerPosition, setPreparerPosition] = useState<string>("ผู้ช่วยบันทึกข้อมูลคอมพิวเตอร์");
   const [managerName, setManagerName] = useState<string>("นายภูศเดช  ภักดีพันธ์");
   const [managerPosition, setManagerPosition] = useState<string>("ผู้จัดการ การไฟฟ้าส่วนภูมิภาคสาขาทับสะแก");
+  const [managerPosition2, setManagerPosition2] = useState<string>("");
   const [showSignSettings, setShowSignSettings] = useState<boolean>(false);
 
   const internChartData = internsWithAttendance.map(intern => ({
@@ -320,6 +321,7 @@ export default function Dashboard() {
                           <p class="signature-line">ลงชื่อ...........................................................................</p>
                           <p>( ${managerName} )</p>
                           <p style="font-size: 10px; color: #666;">ตำแหน่ง ${managerPosition}</p>
+                          ${managerPosition2 ? `<p style="font-size: 10px; color: #666; margin-top: 3px;">${managerPosition2}</p>` : ''}
                         </td>
                       </tr>
                     </table>
@@ -472,13 +474,23 @@ export default function Dashboard() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-500 mb-1">ตำแหน่ง/รักษาการแทน</label>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">ตำแหน่ง บรรทัดที่ 1 (เช่น ผู้จัดการ...)</label>
                     <input 
                       type="text" 
                       value={managerPosition} 
                       onChange={(e) => setManagerPosition(e.target.value)}
                       className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-750 focus:ring-2 focus:ring-blue-500/20 outline-none"
-                      placeholder="เช่น ผู้จัดการ หรือ รักษาการแทน..."
+                      placeholder="เช่น ผู้จัดการ"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">ตำแหน่ง บรรทัดที่ 2 (กรณีมีรักษาการแทน / ไปราชการ)</label>
+                    <input 
+                      type="text" 
+                      value={managerPosition2} 
+                      onChange={(e) => setManagerPosition2(e.target.value)}
+                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-750 focus:ring-2 focus:ring-blue-500/20 outline-none"
+                      placeholder="เช่น รักษาการแทน ผู้จัดการ การไฟฟ้าส่วนภูมิภาคสาขาทับสะแก"
                     />
                   </div>
                 </div>
