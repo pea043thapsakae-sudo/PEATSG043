@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { format, startOfToday, addDays, subDays } from 'date-fns';
 import { th } from 'date-fns/locale';
-import { cn } from '../lib/utils';
+import { cn, calculateLateHours } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function Attendance() {
@@ -108,16 +108,26 @@ export default function Attendance() {
   }, [dateStr]);
 
   const handleMarkStatus = (internId: string, status: AttendanceStatus) => {
-    setAttendance(prev => ({
-      ...prev,
-      [internId]: {
-        ...prev[internId],
+    setAttendance(prev => {
+      const existing = prev[internId] || {};
+      const updated: AttendanceType = {
+        ...existing,
         internId,
         date: dateStr,
         status,
-        createdAt: prev[internId]?.createdAt || new Date().toISOString()
+        createdAt: existing.createdAt || new Date().toISOString()
+      };
+      
+      // If late and checkInTime isn't set, set default to '08:45'
+      if (status === 'late' && !updated.checkInTime) {
+        updated.checkInTime = '08:45';
       }
-    }));
+      
+      return {
+        ...prev,
+        [internId]: updated
+      };
+    });
   };
 
   const handleSave = async () => {
@@ -150,7 +160,7 @@ export default function Attendance() {
     { value: 'late', label: 'มาสาย', icon: Clock, color: 'text-orange-600 bg-orange-50' },
     { value: 'sick', label: 'ลาป่วย', icon: AlertCircle, color: 'text-blue-600 bg-blue-50' },
     { value: 'personal', label: 'ลากิจ', icon: UserMinus, color: 'text-purple-600 bg-purple-50' },
-    { value: 'absent', label: 'ขาดงาน', icon: X, color: 'text-red-600 bg-red-50' },
+    { value: 'absent', label: 'อื่นๆ', icon: X, color: 'text-red-600 bg-red-50' },
   ];
 
   return (
@@ -297,16 +307,82 @@ export default function Attendance() {
                       </button>
                     ))}
                   </div>
+
+                  {/* Additional inputs based on status */}
+                  {attendance[intern.id]?.status === 'absent' && (
+                    <div className="mt-3 flex items-center gap-2">
+                      <span className="text-[11px] font-bold text-red-600 whitespace-nowrap">ระบุเหตุผล:</span>
+                      <input
+                        type="text"
+                        placeholder="ระบุเหตุผล เช่น ขาดการติดต่อ, ไปทำธุระต่างจังหวัด..."
+                        value={attendance[intern.id]?.notes || ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setAttendance(prev => ({
+                            ...prev,
+                            [intern.id]: {
+                              ...prev[intern.id],
+                              notes: val
+                            }
+                          }));
+                        }}
+                        className="rounded-xl border border-red-150 bg-red-50/10 px-3 py-1.5 text-xs focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/10 w-full max-w-md font-semibold text-red-800"
+                      />
+                    </div>
+                  )}
+
+                  {attendance[intern.id]?.status === 'late' && (
+                    <div className="mt-3 flex flex-wrap items-center gap-3 bg-orange-50/40 p-2.5 rounded-xl border border-orange-100/50">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold text-orange-700 whitespace-nowrap">ระบุเวลามาสาย:</span>
+                        <input
+                          type="time"
+                          value={attendance[intern.id]?.checkInTime || '08:45'}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAttendance(prev => ({
+                              ...prev,
+                              [intern.id]: {
+                                ...prev[intern.id],
+                                checkInTime: val
+                              }
+                            }));
+                          }}
+                          className="rounded-lg border border-orange-200 bg-white px-2 py-0.5 text-xs font-bold text-orange-800 focus:border-orange-500 focus:outline-none"
+                        />
+                      </div>
+                      <div className="text-[11px] text-orange-800 font-bold">
+                        ปฏิบัติงานจริง: <span className="text-xs font-extrabold text-orange-600">{calculateLateHours(attendance[intern.id]?.checkInTime)}</span> ชม.
+                      </div>
+                      <div className="text-[9px] text-gray-400">
+                        (เริ่ม 08.30 - 16.30 น. หักพักเที่ยง 1 ชม.)
+                      </div>
+                    </div>
+                  )}
                 </td>
                 <td className="px-8 py-6">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col gap-1">
                     {attendance[intern.id] ? (
-                      <div className={cn(
-                        "flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold uppercase",
-                        statusOptions.find(o => o.value === attendance[intern.id].status)?.color
-                      )}>
-                         {statusOptions.find(o => o.value === attendance[intern.id].status)?.label}
-                      </div>
+                      <>
+                        <div className="flex items-center gap-2">
+                          <div className={cn(
+                            "flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold uppercase",
+                            statusOptions.find(o => o.value === attendance[intern.id].status)?.color
+                          )}>
+                             {statusOptions.find(o => o.value === attendance[intern.id].status)?.label}
+                          </div>
+                        </div>
+                        {attendance[intern.id].status === 'absent' && attendance[intern.id].notes && (
+                          <span className="text-xs text-red-600 font-semibold truncate max-w-[200px]" title={attendance[intern.id].notes}>
+                            เหตุผล: {attendance[intern.id].notes}
+                          </span>
+                        )}
+                        {attendance[intern.id].status === 'late' && (
+                          <span className="text-xs text-orange-600 font-semibold">
+                            เวลา: {attendance[intern.id].checkInTime || '08:45'} น. ({calculateLateHours(attendance[intern.id].checkInTime)} ชม.)
+                          </span>
+                        )}
+                      </>
                     ) : (
                       <span className="text-xs italic text-gray-300">ยังไม่ลงเวลา</span>
                     )}

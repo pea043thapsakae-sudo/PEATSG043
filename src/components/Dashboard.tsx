@@ -25,7 +25,7 @@ import {
   Cell,
   LabelList
 } from 'recharts';
-import { cn } from '../lib/utils';
+import { cn, calculateLateHours } from '../lib/utils';
 
 export default function Dashboard() {
   const [stats, setStats] = useState({
@@ -34,7 +34,7 @@ export default function Dashboard() {
     completedInterns: 0,
     pendingInterns: 0,
   });
-  const [internsWithAttendance, setInternsWithAttendance] = useState<(Intern & { attendanceCount: any })[]>([]);
+  const [internsWithAttendance, setInternsWithAttendance] = useState<(Intern & { attendanceCount: any; totalHours: number })[]>([]);
   const [overallAttendanceData, setOverallAttendanceData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedInternForReport, setSelectedInternForReport] = useState<string>('all');
@@ -79,7 +79,7 @@ export default function Dashboard() {
           late: { name: 'มาสาย', color: '#f59e0b' },
           sick: { name: 'ลาป่วย', color: '#3b82f6' },
           personal: { name: 'ลากิจ', color: '#8b5cf6' },
-          absent: { name: 'ขาด', color: '#ef4444' }
+          absent: { name: 'อื่นๆ', color: '#ef4444' }
         };
 
         const overallStats = Object.keys(statusMap).map(key => ({
@@ -92,6 +92,12 @@ export default function Dashboard() {
         // Interns with summary
         const summary = allInterns.map(intern => {
           const internAttendance = allAttendance.filter(a => a.internId === intern.id);
+          const totalHours = internAttendance.reduce((acc, att) => {
+            if (att.status === 'present') return acc + 7;
+            if (att.status === 'late') return acc + calculateLateHours(att.checkInTime);
+            return acc;
+          }, 0);
+
           return {
             ...intern,
             attendanceCount: {
@@ -100,7 +106,8 @@ export default function Dashboard() {
               sick: internAttendance.filter(a => a.status === 'sick').length,
               personal: internAttendance.filter(a => a.status === 'personal').length,
               absent: internAttendance.filter(a => a.status === 'absent').length,
-            }
+            },
+            totalHours
           };
         });
         setInternsWithAttendance(summary);
@@ -221,13 +228,13 @@ export default function Dashboard() {
                         <th>มาสาย</th>
                         <th>ลาป่วย</th>
                         <th>ลากิจ</th>
-                        <th>ขาด</th>
+                        <th>อื่นๆ</th>
                         <th>จำนวน ชม.</th>
                       </tr>
                     </thead>
                     <tbody>
                       ${filteredInterns.map(intern => {
-                        const totalHours = (intern.attendanceCount.present * 7) + (intern.attendanceCount.late * 3.5);
+                        const totalHours = intern.totalHours;
                         return `
                         <tr>
                           <td class="text-left">${intern.firstName} ${intern.lastName}</td>
@@ -505,13 +512,13 @@ export default function Dashboard() {
                     <th className="px-2 py-3 text-center text-xs font-bold uppercase text-amber-500">สาย</th>
                     <th className="px-2 py-3 text-center text-xs font-bold uppercase text-blue-500">ป่วย</th>
                     <th className="px-2 py-3 text-center text-xs font-bold uppercase text-purple-500">กิจ</th>
-                    <th className="px-2 py-3 text-center text-xs font-bold uppercase text-red-500">ขาด</th>
+                    <th className="px-2 py-3 text-center text-xs font-bold uppercase text-red-500">อื่นๆ</th>
                     <th className="px-2 py-3 text-center text-xs font-bold uppercase text-gray-900 border-l border-gray-100">รวม (ชม.)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {internsWithAttendance.map((intern) => {
-                    const totalHours = (intern.attendanceCount.present * 7) + (intern.attendanceCount.late * 3.5);
+                    const totalHours = intern.totalHours;
                     return (
                       <tr key={intern.id} className="hover:bg-gray-50/50">
                         <td className="px-4 py-3">

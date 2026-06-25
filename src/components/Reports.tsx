@@ -17,7 +17,7 @@ import {
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Intern, Attendance } from '../types';
-import { cn } from '../lib/utils';
+import { cn, calculateLateHours } from '../lib/utils';
 
 const MONTH_NAMES_TH = [
   'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
@@ -153,7 +153,8 @@ export default function Reports() {
     let personal = 0;
     let absent = 0;
 
-    (Object.values(monthlyAttendanceMap) as Attendance[]).forEach(att => {
+    const items = Object.values(monthlyAttendanceMap) as Attendance[];
+    items.forEach(att => {
       if (att.status === 'present') present++;
       else if (att.status === 'late') late++;
       else if (att.status === 'sick') sick++;
@@ -161,7 +162,11 @@ export default function Reports() {
       else if (att.status === 'absent') absent++;
     });
 
-    const totalHours = (present * 7) + (late * 3.5);
+    const totalHours = items.reduce((acc, att) => {
+      if (att.status === 'present') return acc + 7;
+      if (att.status === 'late') return acc + calculateLateHours(att.checkInTime);
+      return acc;
+    }, 0);
 
     return { present, late, sick, personal, absent, totalHours };
   }, [monthlyAttendanceMap]);
@@ -222,13 +227,15 @@ export default function Reports() {
             if (record.status === 'present') {
               statusText = '<span class="status-present">มาปกติ</span>';
             } else if (record.status === 'late') {
-              statusText = '<span class="status-late">มาสาย</span>';
+              const timeStr = record.checkInTime ? `<div style="font-size: 8px; color: #f59e0b; margin-top: 1px;">(${record.checkInTime})</div>` : '';
+              statusText = `<span class="status-late">มาสาย</span>${timeStr}`;
             } else if (record.status === 'sick') {
               statusText = '<span class="status-sick">ลาป่วย</span>';
             } else if (record.status === 'personal') {
               statusText = '<span class="status-personal">ลากิจ</span>';
             } else if (record.status === 'absent') {
-              statusText = '<span class="status-absent">ขาด</span>';
+              const reasonStr = record.notes ? `<div style="font-size: 8px; color: #dc2626; margin-top: 1px; max-width: 50px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${record.notes}">(${record.notes})</div>` : '';
+              statusText = `<span class="status-absent">อื่นๆ</span>${reasonStr}`;
             }
           }
 
@@ -364,7 +371,7 @@ export default function Reports() {
                 <th style="color: #c2410c;">มาสาย (วัน)</th>
                 <th style="color: #1d4ed8;">ลาป่วย (วัน)</th>
                 <th style="color: #6d28d9;">ลากิจ (วัน)</th>
-                <th style="color: #b91c1c;">ขาดงาน (วัน)</th>
+                <th style="color: #b91c1c;">อื่นๆ (วัน)</th>
                 <th style="font-weight: bold; background-color: #f3f4f6;">รวมเวลาปฏิบัติงาน (ชั่วโมง)</th>
               </tr>
             </thead>
@@ -635,7 +642,16 @@ export default function Reports() {
                     statusBadge = <span className="text-[10px] font-bold text-green-700">มาปกติ</span>;
                   } else if (record.status === 'late') {
                     cellBg = "bg-orange-50/70 border-orange-200 text-orange-700";
-                    statusBadge = <span className="text-[10px] font-bold text-orange-700">มาสาย</span>;
+                    statusBadge = (
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[10px] font-bold text-orange-700">มาสาย</span>
+                        {record.checkInTime && (
+                          <span className="text-[9px] font-bold text-orange-500 bg-orange-100/40 rounded px-1 py-0.5 whitespace-nowrap">
+                            {record.checkInTime} น.
+                          </span>
+                        )}
+                      </div>
+                    );
                   } else if (record.status === 'sick') {
                     cellBg = "bg-blue-50/70 border-blue-200 text-blue-700";
                     statusBadge = <span className="text-[10px] font-bold text-blue-700">ลาป่วย</span>;
@@ -644,7 +660,16 @@ export default function Reports() {
                     statusBadge = <span className="text-[10px] font-bold text-purple-700">ลากิจ</span>;
                   } else if (record.status === 'absent') {
                     cellBg = "bg-red-50/70 border-red-200 text-red-700";
-                    statusBadge = <span className="text-[10px] font-bold text-red-700">ขาด</span>;
+                    statusBadge = (
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[10px] font-bold text-red-700">อื่นๆ</span>
+                        {record.notes && (
+                          <span className="truncate text-[8px] font-medium text-red-600 block max-w-full" title={record.notes}>
+                            {record.notes}
+                          </span>
+                        )}
+                      </div>
+                    );
                   }
                 } else if (isWeekend) {
                   cellBg = "bg-red-50/30 text-gray-400";
@@ -754,7 +779,7 @@ export default function Reports() {
 
                 <div className="col-span-2 rounded-2xl border border-red-100 bg-red-50/50 p-3 text-center">
                   <div className="text-2xl font-bold text-red-600">{stats.absent}</div>
-                  <div className="text-xs font-semibold text-red-600/80">ขาดงาน</div>
+                  <div className="text-xs font-semibold text-red-600/80">อื่นๆ</div>
                 </div>
               </div>
 
@@ -768,7 +793,7 @@ export default function Reports() {
                     {stats.totalHours.toLocaleString()} <span className="text-sm font-semibold text-gray-500">ชั่วโมง</span>
                   </div>
                   <div className="mt-2 text-[10px] text-gray-400 leading-relaxed">
-                    * คำนวณจาก มาปกติ วันละ 7 ชม. และ มาสาย วันละ 3.5 ชม. (ลาและขาดไม่คิดชั่วโมง)
+                    * คำนวณจาก มาปกติ วันละ 7 ชม. และ มาสาย ตามเวลาเข้างานจริงเริ่มตั้งแต่ 08.30 น. (ลาและอื่นๆ ไม่คิดชั่วโมง)
                   </div>
                 </div>
               </div>
