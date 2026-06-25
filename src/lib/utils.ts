@@ -54,7 +54,8 @@ export function calculateAttendanceHours(att: any): number {
 export function normalizeDepartments(dept: string | string[] | undefined): string[] {
   if (!dept) return [];
   const arr = Array.isArray(dept) ? dept : [dept];
-  return arr.map(d => d === 'แผนกก่อสร้าง ปฏิบัติการและบำรุงรักษาระบบไฟฟ้า' ? 'แผนกปฏิบัติการระบบไฟฟ้า' : d);
+  const mapped = arr.map(d => d === 'แผนกก่อสร้าง ปฏิบัติการและบำรุงรักษาระบบไฟฟ้า' ? 'แผนกปฏิบัติการระบบไฟฟ้า' : d);
+  return Array.from(new Set(mapped)).filter(Boolean);
 }
 
 export function formatDepartment(dept: string | string[] | undefined): string {

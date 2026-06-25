@@ -14,7 +14,7 @@ import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Intern, InternStatus } from '../types';
 import { Plus, Search, MoreVertical, Edit2, Trash2, UserPlus, X, Mail, Phone, School, Briefcase, Users, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { cn } from '../lib/utils';
+import { cn, normalizeDepartments } from '../lib/utils';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
 
@@ -122,7 +122,7 @@ export default function Interns() {
       major: intern.major,
       minor: intern.minor || '',
       university: intern.university,
-      department: Array.isArray(intern.department) ? intern.department : [intern.department],
+      department: normalizeDepartments(intern.department),
       startDate: intern.startDate,
       endDate: intern.endDate,
       status: intern.status,
@@ -160,7 +160,7 @@ export default function Interns() {
 
   const filteredInterns = interns.filter(i => 
     `${i.firstName} ${i.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (Array.isArray(i.department) ? i.department.join(', ') : i.department).toLowerCase().includes(searchTerm.toLowerCase()) ||
+    normalizeDepartments(i.department).join(', ').toLowerCase().includes(searchTerm.toLowerCase()) ||
     i.university.toLowerCase().includes(searchTerm.toLowerCase()) ||
     i.major.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -223,7 +223,7 @@ export default function Interns() {
                 </td>
                 <td className="px-6 py-4">
                    <div className="flex flex-wrap gap-1">
-                      {(Array.isArray(intern.department) ? intern.department : [intern.department]).map((d, idx) => (
+                      {normalizeDepartments(intern.department).map((d, idx) => (
                         <span key={idx} className="rounded-md bg-gray-100 px-2 py-0.5 text-[10px] text-gray-600">
                           {d}
                         </span>
