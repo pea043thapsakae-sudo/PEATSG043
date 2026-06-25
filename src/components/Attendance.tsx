@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { format, startOfToday, addDays, subDays } from 'date-fns';
 import { th } from 'date-fns/locale';
-import { cn, calculateLateHours } from '../lib/utils';
+import { cn, calculateLateHours, formatDepartment } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function Attendance() {
@@ -279,7 +279,7 @@ export default function Attendance() {
                     <div>
                       <p className="font-bold text-gray-900">{intern.firstName || 'ไม่ระบุ'} {intern.lastName || ''}</p>
                       <p className="text-xs text-gray-400">
-                        {Array.isArray(intern.department) ? intern.department.join(', ') : intern.department}
+                        {formatDepartment(intern.department)}
                       </p>
                     </div>
                   </div>

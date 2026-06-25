@@ -17,7 +17,7 @@ import {
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Intern, Attendance } from '../types';
-import { cn, calculateLateHours } from '../lib/utils';
+import { cn, calculateLateHours, formatDepartment } from '../lib/utils';
 
 const MONTH_NAMES_TH = [
   'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
@@ -342,7 +342,7 @@ export default function Reports() {
               <div><span class="info-label">รหัสประจำตัว:</span> ${selectedIntern.studentId}</div>
               <div><span class="info-label">ระดับชั้น:</span> ${selectedIntern.level} สาขา ${selectedIntern.major}</div>
               <div><span class="info-label">สถาบันการศึกษา:</span> ${selectedIntern.university}</div>
-              <div><span class="info-label">แผนกที่ฝึกงาน:</span> ${selectedIntern.department ? selectedIntern.department.join(', ') : 'ทั่วไป'}</div>
+              <div><span class="info-label">แผนกที่ฝึกงาน:</span> ${formatDepartment(selectedIntern.department)}</div>
               <div><span class="info-label">ประจำเดือน:</span> ${formattedMonth} พ.ศ. ${formattedYearTH}</div>
             </div>
           </div>
@@ -744,7 +744,7 @@ export default function Reports() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">แผนกฝึกงาน:</span>
-                  <span className="font-semibold text-gray-750">{selectedIntern.department ? selectedIntern.department.join(', ') : 'ทั่วไป'}</span>
+                  <span className="font-semibold text-gray-750">{formatDepartment(selectedIntern.department)}</span>
                 </div>
               </div>
             </div>

@@ -50,3 +50,15 @@ export function calculateAttendanceHours(att: any): number {
   if (att.status === 'late') return calculateLateHours(att.checkInTime);
   return 0;
 }
+
+export function normalizeDepartments(dept: string | string[] | undefined): string[] {
+  if (!dept) return [];
+  const arr = Array.isArray(dept) ? dept : [dept];
+  return arr.map(d => d === 'แผนกก่อสร้าง ปฏิบัติการและบำรุงรักษาระบบไฟฟ้า' ? 'แผนกปฏิบัติการระบบไฟฟ้า' : d);
+}
+
+export function formatDepartment(dept: string | string[] | undefined): string {
+  const normalized = normalizeDepartments(dept);
+  return normalized.length > 0 ? normalized.join(', ') : 'ทั่วไป';
+}
+

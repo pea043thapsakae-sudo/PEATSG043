@@ -31,7 +31,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { cn } from '../lib/utils';
+import { cn, formatDepartment } from '../lib/utils';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
 
@@ -285,7 +285,7 @@ export default function Evaluations() {
               <span class="bold-data">${selectedInternForCert.faculty || '-'}</span> เป็นนักศึกษาของ
               <span class="bold-data">${selectedInternForCert.university}</span> ได้ผ่านการฝึกงาน/ฝึกอาชีพตามหลักสูตร
               <span class="bold-data">${selectedInternForCert.level}</span> ณ สถานที่ฝึกงาน/ฝึกอาชีพ สถานที่ตั้ง <span class="bold-data">${certOptions.trainingLocation}</span>
-              แผนก <span class="bold-data">${Array.isArray(selectedInternForCert.department) ? selectedInternForCert.department.join(', ') : selectedInternForCert.department}</span> โดยได้ปฏิบัติงานในหน้าที่
+              แผนก <span class="bold-data">${formatDepartment(selectedInternForCert.department)}</span> โดยได้ปฏิบัติงานในหน้าที่
               และงานต่างๆ ระยะเวลาฝึกงาน/ฝึกอาชีพ วันที่ ${formatThaiDate(selectedInternForCert.startDate)} ถึง 
               วันที่ ${formatThaiDate(selectedInternForCert.endDate)} เป็นระยะเวลา 
               <span class="bold-data">${certOptions.totalDays}</span> วัน รวมจำนวน 
@@ -448,7 +448,7 @@ export default function Evaluations() {
                         <span className="text-sm font-bold">{evalItem.totalScore.toFixed(1)}</span>
                       </div>
                     </div>
-                    <p className="truncate text-xs text-gray-500">{Array.isArray(intern?.department) ? intern?.department.join(', ') : intern?.department} • {format(new Date(evalItem.date), 'd MMM yyyy', { locale: th })}</p>
+                    <p className="truncate text-xs text-gray-500">{formatDepartment(intern?.department)} • {format(new Date(evalItem.date), 'd MMM yyyy', { locale: th })}</p>
                     <p className="mt-2 line-clamp-1 text-sm text-gray-600 italic">"{evalItem.comments}"</p>
                   </div>
                   <div className="flex items-center gap-2 transition-opacity group-hover:opacity-100 sm:opacity-0">
@@ -536,7 +536,7 @@ export default function Evaluations() {
                         </div>
                         <div className="overflow-hidden">
                           <p className="truncate text-sm font-bold text-gray-900">{intern.firstName} {intern.lastName}</p>
-                          <p className="truncate text-xs text-gray-500">{Array.isArray(intern.department) ? intern.department.join(', ') : intern.department}</p>
+                          <p className="truncate text-xs text-gray-500">{formatDepartment(intern.department)}</p>
                         </div>
                       </button>
                     ))}
@@ -723,7 +723,7 @@ export default function Evaluations() {
                     <div className="w-full text-justify leading-[1.6] text-[16pt] space-y-4 text-black font-normal">
                       <p className="indent-24">
                         หนังสือฉบับนี้ให้ไว้เพื่อรับรองว่า <span className="font-normal">{selectedInternForCert.firstName} {selectedInternForCert.lastName}</span> รหัสประจำตัว <span className="font-normal">{selectedInternForCert.studentId}</span> สาขาวิชา 
-                        <span className="font-normal">{selectedInternForCert.major}</span> <span className="font-normal">{selectedInternForCert.faculty || '-'}</span> เป็นนักศึกษาของ <span className="font-normal">{selectedInternForCert.university}</span> ได้ผ่านการฝึกงาน/ฝึกอาชีพตามหลักสูตร <span className="font-normal">{selectedInternForCert.level}</span> ณ สถานที่ฝึกงาน/ฝึกอาชีพ สถานที่ตั้ง <span className="font-normal">{certOptions.trainingLocation}</span> แผนก <span className="font-normal">{Array.isArray(selectedInternForCert.department) ? selectedInternForCert.department.join(', ') : selectedInternForCert.department}</span> โดยได้ปฏิบัติงานในหน้าที่ และงานต่างๆ ระยะเวลาฝึกงาน/ฝึกอาชีพ วันที่ {formatThaiDate(selectedInternForCert.startDate)} ถึง วันที่ {formatThaiDate(selectedInternForCert.endDate)} เป็นระยะเวลา <span className="font-normal">{certOptions.totalDays}</span> วัน รวมจำนวน <span className="font-normal">{certOptions.totalHours}</span> ชั่วโมง ผลการฝึกงาน/ฝึกอาชีพอยู่ในระดับ <span className="font-normal">{certOptions.grade}</span>
+                        <span className="font-normal">{selectedInternForCert.major}</span> <span className="font-normal">{selectedInternForCert.faculty || '-'}</span> เป็นนักศึกษาของ <span className="font-normal">{selectedInternForCert.university}</span> ได้ผ่านการฝึกงาน/ฝึกอาชีพตามหลักสูตร <span className="font-normal">{selectedInternForCert.level}</span> ณ สถานที่ฝึกงาน/ฝึกอาชีพ สถานที่ตั้ง <span className="font-normal">{certOptions.trainingLocation}</span> แผนก <span className="font-normal">{formatDepartment(selectedInternForCert.department)}</span> โดยได้ปฏิบัติงานในหน้าที่ และงานต่างๆ ระยะเวลาฝึกงาน/ฝึกอาชีพ วันที่ {formatThaiDate(selectedInternForCert.startDate)} ถึง วันที่ {formatThaiDate(selectedInternForCert.endDate)} เป็นระยะเวลา <span className="font-normal">{certOptions.totalDays}</span> วัน รวมจำนวน <span className="font-normal">{certOptions.totalHours}</span> ชั่วโมง ผลการฝึกงาน/ฝึกอาชีพอยู่ในระดับ <span className="font-normal">{certOptions.grade}</span>
                       </p>
                     </div>
 
