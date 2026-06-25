@@ -20,9 +20,10 @@ import { cn } from './lib/utils';
 import Dashboard from './components/Dashboard';
 import Interns from './components/Interns';
 import Attendance from './components/Attendance';
+import Reports from './components/Reports';
 import Settings from './components/Settings';
 
-type View = 'dashboard' | 'interns' | 'attendance' | 'settings';
+type View = 'dashboard' | 'interns' | 'attendance' | 'reports' | 'settings';
 
 function AppContent() {
   const { user, loading, login, logout, loginWithEmail, registerWithEmail } = useAuth();
@@ -204,6 +205,7 @@ function AppContent() {
     { id: 'dashboard', label: 'หน้าแรก', icon: LayoutDashboard },
     { id: 'interns', label: 'นักศึกษาฝึกงาน', icon: Users },
     { id: 'attendance', label: 'การเช็คชื่อ', icon: Calendar },
+    { id: 'reports', label: 'รายงานปฏิทิน', icon: FileBadge },
     { id: 'settings', label: 'ตั้งค่า', icon: SettingsIcon },
   ];
 
@@ -310,6 +312,7 @@ function AppContent() {
               {currentView === 'dashboard' && <Dashboard />}
               {currentView === 'interns' && <Interns />}
               {currentView === 'attendance' && <Attendance />}
+              {currentView === 'reports' && <Reports />}
               {currentView === 'settings' && <Settings />}
             </motion.div>
           </AnimatePresence>
